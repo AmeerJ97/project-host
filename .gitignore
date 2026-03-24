@@ -1,0 +1,31 @@
+# Archive directory containing original drafts and internal documents
+archive/
+
+# Private configuration files
+private/
+secrets/
+
+# IDE and editor files
+.vscode/
+.idea/
+.obsidian/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
+# Large model files (if any)
+*.gguf
+*.bin
+*.safetensors
+
+# Local overrides
+.local/
+.env
+config.local.*
