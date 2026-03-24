@@ -70,20 +70,20 @@ graph TD
 The core innovation is the **GPU Direct Memory Path** — a unified memory fabric that treats VRAM, DDR5 RAM, and NVMe swap as a single addressable space. Data moves via DMA bypass where possible, avoiding CPU bottlenecks:
 
 ```mermaid
-flowchart TD
+graph TD
     subgraph Source[Storage Source]
-        NVMe[\"NVMe Gen4 SSD<br/>~7 GB/s\"]
+        NVMe["NVMe Gen4 SSD<br/>~7 GB/s"]
     end
     
     subgraph Paths[Data Path Options]
-        DMA[\"<b>DMA Bypass (GDS)</b><br/>NVMe → PCIe → GPU VRAM<br/>1 hop, ~7 GB/s\"]
-        CPU[\"<b>CPU Bounce</b><br/>NVMe → PCIe → RAM → PCIe → GPU VRAM<br/>2 hops, ~3‑5 GB/s\"]
+        DMA["<b>DMA Bypass (GDS)</b><br/>NVMe → PCIe → GPU VRAM<br/>1 hop, ~7 GB/s"]
+        CPU["<b>CPU Bounce</b><br/>NVMe → PCIe → RAM → PCIe → GPU VRAM<br/>2 hops, ~3‑5 GB/s"]
     end
     
     subgraph Destination[GPU Memory]
-        VRAM[\"VRAM 16 GB<br/>288 GB/s\"]
-        L2[\"GPU L2 Cache<br/>cache_sysmem=1\"]
-        RAM[\"DDR5 96 GB<br/>83 GB/s\"]
+        VRAM["VRAM 16 GB<br/>288 GB/s"]
+        L2["GPU L2 Cache<br/>cache_sysmem=1"]
+        RAM["DDR5 96 GB<br/>83 GB/s"]
     end
     
     NVMe --> DMA
