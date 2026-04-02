@@ -30,7 +30,7 @@ Single authoritative blueprint for a high-resilience, modular Linux workstation.
 
 | Component | Specification |
 |---|---|
-| **Motherboard** | MSI B760 chipset motherboard |
+| **Motherboard** | MSI PRO B760-VC WIFI (MS-7D98) v2.0 |
 | **Firmware** | UEFI (AMI) v B.F0 (2025-04-10) |
 | **CPU** | 13th Gen Intel Core i7-13700F — 16C (8P/8E), 24T, 5.20 GHz Max Turbo |
 | **Cooling** | High-efficiency air cooling |
@@ -43,9 +43,9 @@ Single authoritative blueprint for a high-resilience, modular Linux workstation.
 
 | Device | Model | Capacity | Interface | Role |
 |---|---|---|---|---|
-| `/dev/nvme0n1` | NVMe Gen4 SSD | 1 TB | NVMe PCIe Gen4 | OS + Active Runtime |
-| `/dev/sda` | SATA HDD 7200 RPM | 1.82 TB | SATA III, 7200 RPM | Development + ML |
-| `/dev/sdb` | SATA HDD 5400 RPM | 3.64 TB | SATA III, 5400 RPM | Media + Archive |
+| `/dev/nvme0n1` | MSI M450 | 931.5 GB | NVMe PCIe Gen4 | OS + Active Runtime |
+| `/dev/sda` | WD WD20EZBX | 1.82 TB | SATA III, 7200 RPM | Development + ML |
+| `/dev/sdb` | WD WD40EZRZ | 3.64 TB | SATA III, 5400 RPM | Media + Archive |
 
 **Total Raw Capacity:** ~6.37 TiB
 
@@ -127,9 +127,9 @@ graph TD
     subgraph Storage_Bus ["Storage Bus"]
         NVMe_Bus["NVMe Gen4 x4"]
         SATA_Bus["SATA III (6 Gbps)"]
-        NVMe["nvme0n1<br>NVMe Gen4 SSD 1TB"]
-        SDA["sda<br>SATA HDD 1.82TB 7200RPM"]
-        SDB["sdb<br>SATA HDD 3.64TB 5400RPM"]
+        NVMe["nvme0n1<br>MSI M450 931.5GB"]
+        SDA["sda<br>WD 1.82TB 7200RPM"]
+        SDB["sdb<br>WD 3.64TB 5400RPM"]
         NVMe_Bus --- NVMe
         SATA_Bus --- SDA & SDB
     end
@@ -183,7 +183,7 @@ graph LR
 
 | Volume Group | Physical Source | Capacity | Speed Tier | Status | Role |
 |---|---|---|---|---|---|
-| `vg0` | `/dev/sda1` | 1.82 TB | 7200 RPM | **Current** | Development, projects, user files |
+| `vg0` | `/dev/sda1` | 1.82 TB | 7200 RPM | **Current** | Development, projects, personal files |
 | `vg1` | `/dev/sdb1` | 3.64 TB | 5400 RPM | **Current** | Media, ML models, VMs, staging |
 | `vg_gateway` | `/dev/nvme0n1p3` | 790.8 GB | NVMe Gen4 | **Current** | Active runtime, identity, swap |
 | `vg_sys` | `/dev/nvme0n1p2` | ~60 GB | NVMe Gen4 | Future | Disposable OS root (requires OS reinstall) |
@@ -193,7 +193,7 @@ graph LR
 | Logical Volume | Size | Mount Point | Label | Purpose | Notes |
 |---|---|---|---|---|---|
 | `lv_core` | 1.75 TB | `/home/core` | Core | Development, projects, docs | Primary workspace |
-| `lv_files` | 45 GB | `/home/core/files` | Files | User documents | Nested mount inside lv_core |
+| `lv_files` | 45 GB | `/home/core/files` | Files | Personal files (taxes, CV, immigration) | Nested mount inside lv_core |
 
 VG fully allocated — 0 free.
 
@@ -202,11 +202,11 @@ VG fully allocated — 0 free.
 | Logical Volume | Size | Mount Point | Label | Purpose | Notes |
 |---|---|---|---|---|---|
 | `lv_media` | 1.5 TB | `/home/media` | Media | Pictures, music, videos, archive | — |
-| `lv_models` | 1 TB | `/home/apps/models` | Models | All ML models (Ollama, HF, GGUF, TRT engines) | Single source of truth for ML |
-| `lv_vms` | 500 GB | `/home/apps/vms` | VMs | VM disk images | — |
+| `lv_models` | 1.5 TB | `/home/apps/models` | Models | All ML models (Ollama, HF, GGUF, TRT engines) | Single source of truth for ML |
+| `lv_vms` | 200 GB | `/home/apps/vms` | VMs | VM disk images | — |
 | `lv_staging` | 500 GB | `/home/staging` | Staging | Dedup workspace, misc temp | — |
 
-~166 GB free for future growth.
+~0 GB free (fully allocated).
 
 ### 3.4 ML Model Storage
 
@@ -227,14 +227,16 @@ VG fully allocated — 0 free.
 |---|---|---|---|---|---|
 | `lv_swap` | 32 GB | `[swap]` | Swap | NVMe swap backing for L3 fabric | — |
 | `lv_configs` | 50 GB | `/home/active/configs` | Configs | KDE settings, app configs, dotfiles | 60% used |
-| `lv_apps_state` | 100 GB | `/home/active/apps` | Apps | Docker data-root, browser profiles, cache | 21% used |
-| `lv_inference` | 300 GB | `/home/active/inference` | Inference | Hot model staging, TRT engines | Empty |
-| `lv_temp` | 50 GB | `/home/active/temp` | Temp | Downloads, pnpm store | 13% used |
-| *(free)* | ~259 GB | — | — | Future expansion | — |
+| `lv_apps_state` | 200 GB | `/home/active/apps` | Apps | pipx venvs, browser profiles, app state, cache | 92% used |
+| `lv_inference` | 400 GB | `/home/active/inference` | Inference | Per-backend model staging zones, Ollama blobs | 64% used |
+| `lv_temp` | 65 GB | `/home/active/temp` | Temp | Static swap (33GB), downloads, pnpm store | 69% used |
+| *(free)* | ~44 GB | — | — | Reserved for future storage reorganization | — |
 
-### 3.5.1 Logical Volumes — vg_sys (Future — NVMe Restructuring)
+### 3.5.1 Logical Volumes — vg_sys (Deferred Indefinitely)
 
-`vg_sys` will replace the current raw ext4 root partition with a proper LVM root. This requires an OS reinstall and is deferred.
+> **Status: Deferred indefinitely (2026-04-02).** The raw root partition (nvme0n1p2) is already effectively disposable — all user data lives on LVM volumes that survive a root rebuild. The Survivor Protocol (`rebuild_root.sh`) can reconstruct root from a live USB without needing LVM root. The marginal benefit of LVM snapshots does not justify the migration risk and /boot/efi constraints.
+
+Original plan (retained for reference):
 
 | Logical Volume | Size | Mount Point | Purpose |
 |---|---|---|---|
@@ -245,7 +247,7 @@ VG fully allocated — 0 free.
 | Partition | Size | Filesystem | Mount | Label | Usage | Notes |
 |---|---|---|---|---|---|---|
 | `nvme0n1p1` | 1 GB | FAT32 (EFI) | `/boot/efi` | — | Boot | Unchanged |
-| `nvme0n1p2` | 139.7 GB | ext4 | `/` | System | OS root | ~73% used |
+| `nvme0n1p2` | 139.7 GB | ext4 | `/` | System | OS root | ~70% used |
 | `nvme0n1p3` | 790.8 GB | LVM (`vg_gateway`) | *(5 LVs)* | — | Active runtime | See Section 3.5 |
 
 **vg_gateway LVs on nvme0n1p3:**
@@ -254,20 +256,18 @@ VG fully allocated — 0 free.
 |---|---|---|---|---|
 | `lv_swap` | 32 GB | `[swap]` | Swap | NVMe swap |
 | `lv_configs` | 50 GB | `/home/active/configs` | Configs | 60% used |
-| `lv_apps_state` | 100 GB | `/home/active/apps` | Apps | 21% used |
-| `lv_inference` | 300 GB | `/home/active/inference` | Inference | Empty |
-| `lv_temp` | 50 GB | `/home/active/temp` | Temp | 13% used |
-| *(free)* | ~259 GB | — | — | Future expansion |
+| `lv_apps_state` | 230 GB | `/home/active/apps` | Apps | 80% used |
+| `lv_inference` | 400 GB | `/home/active/inference` | Inference | 64% used |
+| `lv_temp` | 65 GB | `/home/active/temp` | Temp | 69% used |
+| *(free)* | ~14 GB | — | — | Emergency reserve |
 
-### 3.7 NVMe Target Layout (Remaining — vg_sys Only)
-
-The `vg_gateway` partition is now live on `nvme0n1p3`. The remaining future work is replacing the raw ext4 root (`nvme0n1p2`) with a proper LVM root (`vg_sys`), which requires an OS reinstall.
+### 3.7 NVMe Layout Summary
 
 | Partition | Size | Type | Content | Status |
 |---|---|---|---|---|
 | `nvme0n1p1` | 1 GB | FAT32 (EFI) | Boot | **Current** |
-| `nvme0n1p2` | 139.7 GB | ext4 (raw) | OS root (73% used) | **Current** — future: LVM `vg_sys` ~60 GB |
-| `nvme0n1p3` | 790.8 GB | LVM (`vg_gateway`) | 5 LVs + ~259 GB free | **Current** |
+| `nvme0n1p2` | 139.7 GB | ext4 (raw) | OS root (70% used) | **Current** — disposable, rebuildable via Survivor Protocol |
+| `nvme0n1p3` | 790.8 GB | LVM (`vg_gateway`) | 5 LVs + ~14 GB free | **Current** |
 
 ### 3.8 Filesystem Labels
 
@@ -302,8 +302,8 @@ The `vg_gateway` partition is now live on `nvme0n1p3`. The remaining future work
 /home/core                 <- vg0/lv_core (1.75 TB, 7200 RPM)
 /home/core/files           <- vg0/lv_files (45 GB, 7200 RPM)
 /home/media                <- vg1/lv_media (1.5 TB, 5400 RPM)
-/home/apps/models          <- vg1/lv_models (1 TB, 5400 RPM)
-/home/apps/vms             <- vg1/lv_vms (500 GB, 5400 RPM)
+/home/apps/models          <- vg1/lv_models (1.5 TB, 5400 RPM)
+/home/apps/vms             <- vg1/lv_vms (200 GB, 5400 RPM)
 /home/staging              <- vg1/lv_staging (500 GB, 5400 RPM)
 ```
 
@@ -343,18 +343,18 @@ The `vg_gateway` partition is now live on `nvme0n1p3`. The remaining future work
 └── media/dc5-staging/                 TEMPORARY — legacy data being triaged
 
 /home/core/files/                      <- vg0/lv_files (45 GB, 7200 RPM)
-├── documents/
-├── professional/
-├── legal/
+├── taxes/
+├── CV/
+├── immigration/
 └── ...
 
-/home/apps/models/                     <- vg1/lv_models (1 TB, 5400 RPM)
+/home/apps/models/                     <- vg1/lv_models (1.5 TB, 5400 RPM)
 ├── ollama/                            Ollama model storage (OLLAMA_MODELS)
 ├── huggingface/                       HF cache (HF_HOME)
 ├── engines/                           TRT-LLM compiled engines (SM89)
 └── models/                            loose model files (GGUF, safetensors)
 
-/home/apps/vms/                        <- vg1/lv_vms (500 GB, 5400 RPM)
+/home/apps/vms/                        <- vg1/lv_vms (200 GB, 5400 RPM)
 └── (VM disk images)
 
 /home/media/                           <- vg1/lv_media (1.5 TB, 5400 RPM)
@@ -383,14 +383,14 @@ Only four symlinks exist in `~/`:
 |---|---|---|
 | `~/development` | `/home/core/development` | Active code projects |
 | `~/documents` | `/home/core/documents` | Obsidian vault, documentation |
-| `~/files` | `/home/core/files` | User files (lv_files) |
+| `~/files` | `/home/core/files` | Personal files (lv_files) |
 | `~/Downloads` | `/home/active/temp/downloads` | Fast NVMe downloads |
 
 That is the complete set. No other symlinks or bind mounts in the home directory.
 
 ```mermaid
 graph LR
-    subgraph Home ["~ (/home/user)"]
+    subgraph Home ["~ (/home/aj)"]
         SL1["~/development"]
         SL2["~/documents"]
         SL3["~/files"]
@@ -447,7 +447,7 @@ graph TD
             CORE --- CORE_DEV & CORE_INFRA & CORE_PROJECTS & CORE_DOCS
 
             FILES_LV["/home/core/files (lv_files 45 GB)"]
-            FILES_LV --- FILES_DOC["documents/"] & FILES_PROF["professional/"] & FILES_LEGAL["legal/"]
+            FILES_LV --- FILES_TAX["taxes/"] & FILES_CV["CV/"] & FILES_IMM["immigration/"]
         end
     end
 
@@ -465,7 +465,7 @@ graph TD
         end
     end
 
-    subgraph User_Home ["/home/user (symlink hub)"]
+    subgraph User_Home ["/home/aj (symlink hub)"]
         HL_DEV["~/development ->"]
         HL_DOCS["~/documents ->"]
         HL_FILES["~/files ->"]
@@ -493,7 +493,7 @@ Four memory tiers exist between the GPU and permanent storage, with order-of-mag
 | **T0** | VRAM (GDDR6) | 288 GB/s | 16 GB |
 | **T1** | DDR5-5200 (dual channel) | ~83 GB/s | 96 GB |
 | **T2** | NVMe Gen4 x4 | ~3.6 GB/s | 790.8 GB (vg_gateway) |
-| **T3** | HDD 5400 RPM (sdb) | ~0.1 GB/s | 1 TB (lv_models) |
+| **T3** | HDD 5400 RPM (sdb) | ~0.1 GB/s | 1.5 TB (lv_models) |
 
 The PCIe x8 Gen4 bridge between GPU and system RAM is ~15.75 GB/s unidirectional — the critical bottleneck for weight streaming.
 
@@ -747,7 +747,7 @@ flowchart TD
 ```mermaid
 graph LR
     subgraph Cold ["Cold Storage (HDD)"]
-        MODELS["lv_models (1 TB)<br>Ollama, HF, GGUF<br>Full model library"]
+        MODELS["lv_models (1.5 TB)<br>Ollama, HF, GGUF<br>Full model library"]
     end
 
     subgraph Hot ["Hot Staging (NVMe)"]
@@ -859,7 +859,7 @@ graph TD
     end
 
     subgraph Permanent ["Permanent Storage (HDD)"]
-        LV_MOD["lv_models (1 TB)<br>Full model library"]
+        LV_MOD["lv_models (1.5 TB)<br>Full model library"]
     end
 
     LV_MOD -->|"stage model<br>(rsync, one-time)"| LV_INF
@@ -880,14 +880,14 @@ Kernel and runtime tuning that supports the inference memory hierarchy:
 
 **zswap:** Disabled (`zswap.enabled=0` in GRUB). CPU cycles are reserved for inference workloads, not swap compression. Cold anonymous pages go directly to NVMe swap.
 
-**HugePages:** 4096 x 2MB = 8 GB statically reserved (`vm.nr_hugepages=4096`). Used by GPU driver pinned buffers and large model allocations.
+**HugePages:** Profile-dependent. Workstation: `vm.nr_hugepages=0` (disabled — avoids starving mixed workloads). Inference-only: `vm.nr_hugepages=4096` (8 GB reserved for GPU driver pinned buffers).
 
 **Transparent Huge Pages (THP):**
 - Mode: `madvise` — inference engines opt-in via `madvise(MADV_HUGEPAGE)` on tensor allocations
 - Desktop apps and Electron processes are not forced into hugepages (avoids compaction stalls)
 
 **GPU Power Management:**
-- 140W power cap via `nvidia-powerlimit.service` (overrides older 150W `nvidia-powercap.service`)
+- 140W power cap via `nvidia-powercap.service` (overrides older 150W `nvidia-powercap.service`)
 - Clock lock removed (was 2535 MHz) — 140W power cap governs thermal/clock behavior; card boosts to 2610+ MHz (see 5.11)
 - Persistence mode eliminates 200-300ms cold-start latency
 
@@ -899,14 +899,14 @@ Kernel and runtime tuning that supports the inference memory hierarchy:
 graph TD
     subgraph Kernel_Tuning ["Kernel Tuning"]
         ZSWAP_OPT["zswap: disabled<br>CPU reserved for inference"]
-        HUGEPAGES_OPT["HugePages: 4096 x 2MB<br>8 GB static reserve"]
+        HUGEPAGES_OPT["HugePages: profile-dependent<br>0 (workstation) / 4096 (inference)"]
         THP_OPT["THP: madvise<br>engines opt-in"]
-        SWAP_OPT["swappiness=10<br>favor file cache reclaim"]
+        SWAP_OPT["swappiness=1<br>strongly favor RAM"]
         DIRTY_OPT["dirty_bytes<br>1.5 GB bg / 4 GB hard"]
     end
 
     subgraph GPU_Tuning ["GPU Tuning"]
-        PCAP["Power Cap: 140W<br>nvidia-powerlimit.service"]
+        PCAP["Power Cap: 140W<br>nvidia-powercap.service"]
         CLOCK["Clock Lock: removed<br>140W cap governs boost"]
         PERSIST["Persistence Mode<br>no cold-start penalty"]
     end
@@ -935,11 +935,11 @@ export INFERENCE_STAGING=/home/active/inference
 
 ### 5.11 Benchmark Results (2026-03-17)
 
-Benchmark data is currently being collected and validated. Full results will be published in the [Inference Benchmarks](docs/guides/inference-benchmarks.md) guide once the validation suite is complete.
+Measured inference performance after applying the optimizations below. All benchmarks run on the RTX 4060 Ti 16GB with 96 GB DDR5-5200 and Ollama as the inference runtime.
 
 #### 5.11.1 Optimizations Applied
 
-**GPU clock lock removed** — was locked at 2535 MHz (see 5.9), max boost is 3105 MHz. The 140W power cap (via `nvidia-powerlimit.service`) acts as natural thermal governor. Card now boosts to 2610+ MHz during inference.
+**GPU clock lock removed** — was locked at 2535 MHz (see 5.9), max boost is 3105 MHz. The 140W power cap (via `nvidia-powercap.service`) acts as natural thermal governor. Card now boosts to 2610+ MHz during inference.
 
 **Ollama runtime tuning** (systemd override + environment):
 
@@ -963,34 +963,86 @@ Benchmark data is currently being collected and validated. Full results will be 
 
 **App config offload** — Chrome (11 GB), VS Code (9.1 GB), Antigravity (2.3 GB), Discord, Slack, and `~/.local/share` moved to `lv_apps_state` via symlinks. Root partition usage dropped from 73% to 50%.
 
-#### 5.11.2 Key Architectural Insights
+#### 5.11.2 Model Benchmarks
 
-**Layer Split Impact:** For models that overflow VRAM, the optimal strategy is to maximize GPU layers up to ~15.5 GB VRAM — leaving ~0.5 GB headroom for KV cache and CUDA overhead. Additional layers beyond VRAM capacity stream from DDR5 at 83 GB/s (memory bus) but are gated by the 15.75 GB/s PCIe bridge.
+**qwen3.5:9b** (6.5 GB, fits entirely in VRAM):
 
-**PCIe Bottleneck:** Generation speed for oversubscribed models is dominated by PCIe weight streaming — the bottleneck described in Section 5.2. Tensor cores are fully utilized for layers that fit in VRAM; the limiting factor is data delivery, not compute.
+| Metric | Value |
+|---|---|
+| VRAM usage | 8.8 GB / 16 GB |
+| Prompt eval | 437 tok/s (tensor cores + flash attention) |
+| Generation | 43.8 tok/s |
+| GPU temp (post-run idle) | 49 C, 36 W |
 
-**Ollama auto‑split behavior:** Ollama's automatic `num_gpu` selection on Linux is conservative — for models that overflow VRAM, it tends to under‑allocate GPU layers. For maximum performance, manually specify `num_gpu` in the API call or create a Modelfile with the optimal value for each model size.
+**qwen3:32b Q4_K_M** (20 GB, overflows VRAM):
 
-#### 5.11.3 Recommended `num_gpu` Values
+| Configuration | VRAM | Prompt eval | Generation | GPU |
+|---|---|---|---|---|
+| Ollama auto-split (`num_gpu=20`, 31% GPU) | 8.5 GB | — | 4.2 tok/s | — |
+| Ollama auto-split (default, 31% GPU) | — | — | 5.8 tok/s | 69% CPU / 31% GPU |
+| Optimized split (`num_gpu=40`, 62% GPU) | 15.5 GB | 45.7 tok/s | 5.4 tok/s | 61 C, 60 W, 2610 MHz |
 
-Target hardware: RTX 4060 Ti 16GB, PCIe x8 Gen4, 96 GB DDR5‑5200.
+The `num_gpu=20` case is worse — fewer layers on GPU means more PCIe round trips per token. The `num_gpu=40` case fills VRAM to 15.5 GB but generation speed remains ~5.4 tok/s because the bottleneck shifts entirely to PCIe x8 Gen4 bandwidth (15.75 GB/s) for streaming the remaining layers from DDR5.
 
-| Model Size | Quant | Weight Size | Fits VRAM? | Recommended `num_gpu` | Expected VRAM |
-|---|---|---|---|---|---|
-| 1‑3B | Q4_K_M | 1‑2 GB | Yes | `99` (all) | 2‑4 GB |
-| 7‑9B | Q4_K_M | 4‑6 GB | Yes | `99` (all) | 6‑9 GB |
-| 14B | Q4_K_M | 8‑9 GB | Yes | `99` (all) | 10‑13 GB |
-| 22‑27B | Q4_K_M | 13‑16 GB | Marginal | `99` (all) | 14‑16 GB |
-| 32B | Q4_K_M | 20 GB | No | `40` | 15.5 GB |
-| 70B | Q4_K_M | 40 GB | No | `24` | 15.5 GB |
+#### 5.11.3 Key Finding: Layer Split Impact
 
-**Rule of thumb:** Set `num_gpu` to the highest value that keeps VRAM at or below 15.5 GB. Use `ollama ps` or `nvidia‑smi` to verify. For models that fit entirely in VRAM, set `num_gpu=99` to force full GPU offload.
+For models that overflow VRAM, the optimal strategy is to maximize GPU layers up to ~15.5 GB VRAM — leaving ~0.5 GB headroom for KV cache and CUDA overhead. Additional layers beyond VRAM capacity stream from DDR5 at 83 GB/s (memory bus) but are gated by the 15.75 GB/s PCIe bridge.
+
+Generation speed for oversubscribed models (5-6 tok/s for 32B) is dominated by PCIe weight streaming — the bottleneck described in Section 5.2. Tensor cores are fully utilized for layers that fit in VRAM; the limiting factor is data delivery, not compute.
+
+**Ollama auto-split behavior:** Ollama's automatic `num_gpu` selection on Linux is conservative — for the 32B model it chose 31% GPU offload when 62% was achievable. For maximum performance, manually specify `num_gpu` in the API call or create a Modelfile with the optimal value for each model size.
+
+#### 5.11.4 Recommended `num_gpu` Values
+
+Target hardware: RTX 4060 Ti 16GB, PCIe x8 Gen4, 96 GB DDR5-5200.
+
+| Model Size | Quant | Weight Size | Fits VRAM? | Recommended `num_gpu` | Expected VRAM | Expected tok/s |
+|---|---|---|---|---|---|---|
+| 1-3B | Q4_K_M | 1-2 GB | Yes | `99` (all) | 2-4 GB | 80-120 |
+| 7-9B | Q4_K_M | 4-6 GB | Yes | `99` (all) | 6-9 GB | 40-50 |
+| 14B | Q4_K_M | 8-9 GB | Yes | `99` (all) | 10-13 GB | 25-35 |
+| 22-27B | Q4_K_M | 13-16 GB | Marginal | `99` (all) | 14-16 GB | 15-25 |
+| 32B | Q4_K_M | 20 GB | No | `40` | 15.5 GB | 5-6 |
+| 70B | Q4_K_M | 40 GB | No | `24` | 15.5 GB | 2-3 |
+
+**Rule of thumb:** Set `num_gpu` to the highest value that keeps VRAM at or below 15.5 GB. Use `ollama ps` or `nvidia-smi` to verify. For models that fit entirely in VRAM, set `num_gpu=99` to force full GPU offload.
+
+```mermaid
+graph LR
+    subgraph Benchmark_Results ["Inference Benchmark Summary (RTX 4060 Ti 16GB)"]
+        direction TB
+
+        subgraph VRAM_Fit ["Models Fitting in VRAM"]
+            Q9B["qwen3.5:9b<br>6.5 GB model<br>━━━━━━━━━━━━━━━━━━━━━━<br><b>437 tok/s</b> prompt eval<br><b>43.8 tok/s</b> generation<br>8.8 GB VRAM"]
+        end
+
+        subgraph VRAM_Overflow ["Models Overflowing VRAM"]
+            Q32_AUTO["qwen3:32b (auto-split)<br>20 GB model, 31% GPU<br>━━━━━━━━━━━━━━━━━━━━━━<br><b>5.8 tok/s</b> generation<br>8.5 GB VRAM"]
+            Q32_OPT["qwen3:32b (num_gpu=40)<br>20 GB model, 62% GPU<br>━━━━━━━━━━━━━━━━━━━━━━<br><b>45.7 tok/s</b> prompt eval<br><b>5.4 tok/s</b> generation<br>15.5 GB VRAM"]
+        end
+    end
+
+    subgraph Bottleneck ["Bottleneck Analysis"]
+        direction TB
+        BN_VRAM["VRAM-resident models:<br>Tensor core bound<br>288 GB/s bandwidth"]
+        BN_PCIE["Split models:<br>PCIe x8 Gen4 bound<br>15.75 GB/s bandwidth"]
+        BN_VRAM ~~~ BN_PCIE
+    end
+
+    VRAM_Fit -.->|"No bottleneck"| BN_VRAM
+    VRAM_Overflow -.->|"Weight streaming"| BN_PCIE
+
+    style VRAM_Fit fill:#51cf66,stroke:#333,color:#fff
+    style VRAM_Overflow fill:#fab005,stroke:#333,color:#000
+    style Bottleneck fill:#339af0,stroke:#333,color:#fff
+    style Benchmark_Results fill:#1a1a2e,stroke:#333,color:#fff
+```
 
 ---
 
 ## 6. BIOS Configuration
 
-All settings entered manually via UEFI BIOS. Press `Delete` at boot, then `F7` for Advanced Mode.
+All settings entered manually via MSI Click BIOS 5 (Firmware B.F0). Press `Delete` at boot, then `F7` for Advanced Mode.
 
 ### 6.1 CPU & Power
 
@@ -1107,19 +1159,19 @@ cat /sys/kernel/mm/transparent_hugepage/enabled
 # Expected: always [madvise] never
 ```
 
-**Sysctl tuning** (`/etc/sysctl.d/99-sysctl.conf`):
+**Sysctl tuning** (`/etc/sysctl.d/99-inference.conf`):
 ```
-vm.swappiness = 10
+vm.swappiness = 1
 vm.dirty_background_bytes = 1610612736
 vm.dirty_bytes = 4294967296
-vm.vfs_cache_pressure = 80
+vm.vfs_cache_pressure = 50
 ```
 
 Rationale:
-- `swappiness=10` — strongly favors reclaiming file cache (cheap for mmap'd model weights) over swapping anonymous memory. Values below 5 cause aggressive page cache reclaim, hurting mmap-based model loading.
+- `swappiness=1` — near-zero swap pressure. Keeps model weights in RAM; only swaps under extreme memory pressure. The previous value of 10 was reduced after observing UVM overflow models performing better with minimal swap competition.
 - `dirty_*_bytes` — absolute bytes, not ratios. Ratios scale badly at 96 GB (20% = 19.2 GB dirty data before forced writeback). 1.5 GB background / 4 GB hard limit gives predictable behavior.
-- `vfs_cache_pressure=80` — slightly favors keeping dentry/inode cache over page cache.
-- **Static HugePages** (`vm.nr_hugepages=4096`) — 4096 x 2MB = 8 GB reserved for GPU driver pinned buffers and large model allocations. THP madvise handles additional large-page allocation for inference engines.
+- `vfs_cache_pressure=50` — balanced dentry/inode cache vs page cache eviction.
+- **HugePages** — profile-dependent: `vm.nr_hugepages=0` for workstation (avoid starving mixed workloads), `4096` for inference-only (8 GB reserved for GPU driver pinned buffers). THP madvise handles large-page allocation dynamically.
 
 ### 7.4 NVIDIA Driver Configuration
 
@@ -1216,7 +1268,7 @@ sequenceDiagram
     VRAM-->>App: Return generated tokens
 
     alt RAM pressure exceeds threshold
-        L2-->>L2: Kernel reclaims file-backed pages first (swappiness=10)
+        L2-->>L2: Kernel reclaims file-backed pages first (swappiness=1)
         L2->>L3S: Anonymous pages evict directly to NVMe swap (no compression)
     end
 
@@ -1238,27 +1290,22 @@ sequenceDiagram
 
 ```ini
 [Unit]
-Description=NVIDIA Persistence Mode, Power Cap, and Clock Lock
+Description=NVIDIA Persistence Mode, Power Cap, Clock Lock, and Device Permissions
 After=nvidia-persistenced.service
 Requires=nvidia-persistenced.service
 
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/nvidia-smi -pm ENABLED
-ExecStart=/usr/bin/nvidia-smi -pl 150
-ExecStart=/usr/bin/nvidia-smi -lgc 2535
+ExecStart=/usr/bin/nvidia-smi -pl 140
 RemainAfterExit=yes
-ExecStop=/usr/bin/nvidia-smi -rgc
 
 [Install]
 WantedBy=multi-user.target
 ```
 
 - **Persistence mode** prevents driver unload on idle (eliminates 200-300ms cold-start latency)
-- **150W power cap** in this older service is superseded by `nvidia-powerlimit.service` which sets 140W
-- **2535 MHz clock lock** has been removed — the 140W power cap acts as natural thermal governor; card boosts to 2610+ MHz
-
-> **Note:** The active power limit is 140W, set by `nvidia-powerlimit.service` which runs after this service.
+- **140W power cap** — prevents thermal throttle oscillation at 150W+. No clock lock; GPU settles naturally under power cap (boosts to 2610+ MHz during inference).
 
 ### 9.2 Inference Priority
 
@@ -1361,7 +1408,7 @@ graph TD
     MOUNTS_GW --> DOCKER["Docker daemon<br>(data-root: /home/active/apps/docker-data)"]
 
     MOUNTS_SYS --> NVIDIA_PERSIST["nvidia-persistenced"]
-    NVIDIA_PERSIST --> NVIDIA_PC["nvidia-powerlimit<br>(140W, clock unlocked)"]
+    NVIDIA_PERSIST --> NVIDIA_PC["nvidia-powercap<br>(140W, clock unlocked)"]
     NVIDIA_PC --> OLLAMA["ollama.service"]
     SWAP --> OLLAMA
 
@@ -1382,14 +1429,14 @@ graph TD
 
 | Service | Unit File | Status | Purpose |
 |---|---|---|---|
-| `nvidia-powercap` | `/etc/systemd/system/nvidia-powercap.service` | **Superseded** | Older service (150W + 2535 MHz clock lock) — superseded by `nvidia-powerlimit.service` (140W) |
+| `nvidia-powercap` | `/etc/systemd/system/nvidia-powercap.service` | **Active** | GPU persistence mode + 140W power cap (workstation profile) |
 | `nvidia-persistenced` | System-provided | **Active** | Prevents driver unload on idle |
 | `ollama` | System-provided | **Active** | Ollama inference server (port 11434) |
 | `thermald` | System-provided | **Active** | Kernel-level thermal backstop |
 | `ps4-boot` | Custom | **Active** | PS4 remote boot service |
 | `ps4-debug` | Custom | **Active** | PS4 debug proxy |
 | `ps4-proxy` | Custom | **Active** | PS4 network proxy |
-| `swapspace` | System-provided | **Not installed** | Dynamic L3 swap expansion |
+| `swapspace` | System-provided | **Active** | Dynamic L3 swap expansion daemon |
 | `fullmetal-watchdog` | Planned | **Future** | Rust/eBPF thermal + hardware monitor |
 
 ---
@@ -1474,7 +1521,7 @@ graph TD
 | Dotfiles, SSH keys, KDE settings | Identity (dotfiles) | **Critical** | Git push to Gitea | k3s cluster (Gitea on nfs-drbd) |
 | Active projects | `/home/core/development` | **High** | restic nightly | k3s cluster (restic REST on nfs-drbd) |
 | Irreplaceable photos | `/home/media` (subset) | **Critical** | restic nightly, dedicated repo | k3s cluster (DRBD HA storage) |
-| User files | `/home/core/files` | **High** | restic nightly | k3s cluster |
+| Personal files | `/home/core/files` | **High** | restic nightly | k3s cluster |
 | Bulk media (movies, etc.) | `/home/media` | Low | Not backed up (replaceable) | — |
 | ML models | `/home/apps/ml` | None | Re-downloadable from HF/NGC | — |
 | OS root | `/` | None | Disposable — reinstall from ISO | — |
@@ -1517,7 +1564,7 @@ set -euo pipefail
 
 LOG_FILE="/var/log/survivor.log"
 RECOVERY_DIRS=("/home/active/configs/SURVIVOR" "/home/core/SURVIVOR")
-USERNAME="user"
+USERNAME="aj"
 USER_HOME="/home/${USERNAME}"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"; }
@@ -1690,7 +1737,7 @@ log "  4. Run diagnostics:      See Section 14 of ARCHITECTURE.md"
 | Ollama status | `curl -s http://localhost:11434/api/tags \| head -c 200` | JSON with model list |
 | Network (cluster) | `ping -c 1 192.168.2.11` | 1 packet received |
 | UFW status | `sudo ufw status numbered` | Rules for 22, 1714-1764, 11434, 8000-8002 |
-| Swappiness | `cat /proc/sys/vm/swappiness` | `10` |
+| Swappiness | `cat /proc/sys/vm/swappiness` | `1` |
 | ReBAR size | `nvidia-smi -q \| grep "BAR1"` | BAR1 Memory Usage: 16384 MiB |
 
 ---

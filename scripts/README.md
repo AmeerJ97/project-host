@@ -1,53 +1,58 @@
 # Scripts
 
-This directory contains executable scripts used to validate, monitor, and maintain the Project Host architecture.
+Validation and diagnostic scripts for the Project Host architecture.
 
-## Overview
+## Master Sweep (v4.0)
 
-| Script | Purpose |
-|--------|---------|
-| `sweep.sh` | Comprehensive system diagnostics sweep — verifies all major subsystem configurations against expected values. |
-| `health-check.sh` | Detailed health check with color-coded results and fix instructions for each failure. |
-| `check_host.sh` | Quick checklist for critical GPU and memory configuration parameters. |
-
-## Usage
-
-All scripts are designed to be run from the repository root:
+The single entry point for system validation. Supersedes all legacy scripts.
 
 ```bash
-./scripts/sweep.sh
-./scripts/health-check.sh [--no-color] [--section SECTION]
-./scripts/check_host.sh
+# Default profile (workstation — mixed desktop + inference)
+sudo ./scripts/master-sweep.sh
+
+# Specific profile
+sudo ./scripts/master-sweep.sh --profile inference-only
+sudo ./scripts/master-sweep.sh --profile benchmark
+
+# No color (for piping / logging)
+sudo ./scripts/master-sweep.sh --no-color
 ```
 
-## Configuration
+## Profiles
 
-The scripts contain hardcoded expectation values that match the original Project Host hardware and software configuration. To adapt them to a different system:
+Configuration profiles define expected values for each check. Located in `profiles/`.
 
-1. **`sweep.sh`** uses environment variables and an optional configuration file.  
-   Copy `sweep_config.sh.example` to `sweep_config.sh` and adjust the values.
+| Profile | Use Case | Power | CPU Affinity | CPU Cap |
+|---------|----------|-------|-------------|---------|
+| **workstation** (default) | Desktop + Chrome + Claude Code + inference | 140W | All 16 cores | 98% per core |
+| **inference-only** | Dedicated inference, desktop idle | 150W | P-cores (0-7) | 98% per core |
+| **benchmark** | Isolated testing, accepts thermal risk | 165W | All 16 cores | 100% per core |
 
-2. **`health-check.sh`** currently embeds expectation values directly in the script.  
-   Edit the script file and replace values like driver version, power limits, etc., with those appropriate for the target hardware.
+To create a custom profile, copy `profiles/workstation.conf` and adjust the values.
 
-3. **`check_host.sh`** is a lightweight checklist that assumes standard NVIDIA GPU settings; modify the expected BAR size and PCIe speed if needed.
+## Directory Structure
 
-## Design Philosophy
+```
+scripts/
+├── master-sweep.sh          # Main validation script (v4.0)
+├── rgb_sniper.py            # RGB control utility
+├── profiles/
+│   ├── workstation.conf     # Default profile
+│   ├── inference-only.conf  # Dedicated inference
+│   └── benchmark.conf       # Performance testing
+├── legacy/                  # Superseded scripts (reference only)
+│   ├── sweep.sh
+│   ├── health-check.sh
+│   ├── check_host.sh
+│   ├── check-optimizations.sh
+│   └── sweep_config.sh.example
+└── README.md
+```
 
-These scripts embody the **validation‑first** approach of the Project Host architecture:
+## Configuration Reference
 
-- **Automated verification** ensures that every documented configuration parameter is actually applied.
-- **Self‑documenting failures** provide clear fix instructions for each mismatch.
-- **Modular checks** allow selective validation (e.g., `--section GPU` in `health‑check.sh`).
-
-They are intended as **working examples** of how to enforce a consistent system state, not as universal tools. Adapt them to the target environment by updating the expected values and adding/removing checks as needed.
-
-## Extending
-
-To add a new check:
-
-1. Identify the subsystem and the command that reports its current state.
-2. Add a new `check` (or `check_contains`, `check_gte`) call in the appropriate section.
-3. Provide a helpful fix message that guides the user toward the correct configuration.
-
-All scripts follow the same color‑coding and output conventions for consistency.
+See [docs/INFERENCE-CONFIG.md](../docs/INFERENCE-CONFIG.md) for the full configuration reference including:
+- Service file contents
+- sysctl values and rationale
+- CUDA/GPU access setup
+- Lessons learned from the 2026-04-01 tuning session

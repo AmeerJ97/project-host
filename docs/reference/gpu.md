@@ -8,7 +8,7 @@
 
 ### Power Limit
 
-**File:** `/etc/systemd/system/nvidia-powerlimit.service`
+**File:** `/etc/systemd/system/nvidia-powercap.service`
 
 ```ini
 [Unit]
@@ -25,7 +25,7 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 ```
 
-> **Note:** An older service `/etc/systemd/system/nvidia-powercap.service` exists (sets 150W). The `nvidia-powerlimit.service` runs after it and overrides the cap to 140W.
+> **Note:** An older service `/etc/systemd/system/nvidia-powercap.service` exists (sets 150W). The `nvidia-powercap.service` runs after it and overrides the cap to 140W.
 
 ### Persistence Mode
 

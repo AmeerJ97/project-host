@@ -5,6 +5,19 @@ archive/
 private/
 secrets/
 
+# Machine-specific files (contain UUIDs, IPs, BIOS firmware details)
+BIOS.md
+docs/investigation-inference-uvm.md
+
+# Claude Code internal files
+CLAUDE.md
+.claude/
+plans/
+
+# Internal tooling
+bin/
+templates/
+
 # IDE and editor files
 .vscode/
 .idea/

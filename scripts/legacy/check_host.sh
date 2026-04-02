@@ -17,7 +17,7 @@ echo -n "1. Resizable BAR (ReBAR) Status: "
 if [ "$BAR_SIZE" == "16384" ]; then
     echo -e "${GREEN}OPTIMIZED ($BAR_SIZE MiB)${NC}"
 else
-    echo -e "${RED}THROTTLED ($BAR_SIZE MiB)${NC} -> Enable 'Above 4G Decoding' & 'Re-Size BAR' in motherboard BIOS."
+    echo -e "${RED}THROTTLED ($BAR_SIZE MiB)${NC} -> Enable 'Above 4G Decoding' & 'Re-Size BAR' in MSI BIOS."
 fi
 
 # 2. Check PCIe Link Speed (The 16GT/s Gen4 Target)

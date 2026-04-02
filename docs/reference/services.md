@@ -5,7 +5,7 @@
 | Service | Description | Status |
 |---------|-------------|--------|
 | `ollama.service` | LLM inference server (Ollama) | Active, enabled |
-| `nvidia-powerlimit.service` | GPU power cap at 140W | Active, enabled |
+| `nvidia-powercap.service` | GPU power cap at 140W | Active, enabled |
 | `nvidia-powercap.service` | Older GPU cap (150W) — superseded by powerlimit | Superseded |
 | `nvidia-persistenced.service` | NVIDIA persistence daemon | Active, enabled |
 | `swapspace.service` | Dynamic L3 swap manager | Active, enabled |
